@@ -16,9 +16,10 @@ def Decode_J_TYPE(instruction):
     for x in imm:
         imm_str += x
     imm_str = imm_str[::-1]
-    return int(imm_str, 2), int(instruction[7:12], 2)
+    return int(imm_str, 2), int(instruction[11:6:-1], 2)
 
 def Decode_U_TYPE(instruction):
+    print(instruction)
     instruction = instruction[::-1]
     imm = [0] * 32
     for i in range(31, 11, -1):
@@ -26,9 +27,9 @@ def Decode_U_TYPE(instruction):
 
     imm_str = ""
     for x in imm:
-        imm_str += x
+        imm_str += str(x)
     imm_str = imm_str[::-1]
-    return int(imm_str, 2), int(instruction[7:12], 2)
+    return int(imm_str, 2), int(instruction[11:6:-1], 2)
 
 def Decode_I_TYPE(instruction):
     instruction = instruction[::-1]
@@ -41,8 +42,12 @@ def Decode_I_TYPE(instruction):
     imm_str = ""
     for x in imm:
         imm_str += x
+    func7 = imm_str[5:12]
+    special_funct7 = imm_str[0:5]
     imm_str = imm_str[::-1]
-    return int(imm_str, 2), int(instruction[15:20], 2), int(instruction[12:15], 2), int(instruction[7:12], 2)
+    func7 = func7[::-1]
+    special_funct7 = special_funct7[::-1]
+    return int(imm_str, 2), int(instruction[19:14:-1], 2), int(instruction[14:11:-1], 2), int(instruction[11:6:-1], 2), int(func7, 2), int(special_funct7, 2)
 
 def Decode_S_TYPE(instruction):
     instruction = instruction[::-1]
@@ -58,7 +63,7 @@ def Decode_S_TYPE(instruction):
     for x in imm:
         imm_str += x
     imm_str = imm_str[::-1]
-    return int(imm_str, 2), int(instruction[20:25], 2), int(instruction[15:20], 2), int(instruction[12:15], 2), int(instruction[7:12], 2)
+    return int(imm_str, 2), int(instruction[24:19:-1], 2), int(instruction[19:14:-1], 2), int(instruction[14:11:-1], 2), int(instruction[11:6:-1], 2)
 
 
 def Decode_B_TYPE(instruction):
@@ -76,44 +81,122 @@ def Decode_B_TYPE(instruction):
     for x in imm:
         imm_str += x
     imm_str = imm_str[::-1]
-    return int(imm_str, 2), int(instruction[20:25], 2), int(instruction[15:20], 2), int(instruction[12:15], 2)
+    return int(imm_str, 2), int(instruction[24:19:-1], 2), int(instruction[19:14:-1], 2), int(instruction[14:11:-1], 2)
 
 def Decode_R_TYPE(instruction):
     instruction = instruction[::-1]
-    return int(instruction[25:32], 2), int(instruction[20:25], 2), int(instruction[15:20], 2), int(instruction[12:15], 2), int(instruction[7:12], 2)
+    return int(instruction[31:24:-1], 2), int(instruction[24:19:-1], 2), int(instruction[19:14:-1], 2), int(instruction[14:11:-1], 2), int(nstruction[11:6:-1], 2)
 
 def Instruction_Decode(instruction):
-    instruction = instruction.hex()
+    #instruction = instruction.hex()
     instruction = bin(int(instruction, 16))[2:].zfill(32)
 
     opcode = instruction[-7:]
-    print(opcode)
 
     if opcode == "0110111":
         imm, rd = Decode_U_TYPE(instruction)
-        return rd, imm, LUI
+        return rd, imm, "LUI"
 
     if opcode == "0010111":
         imm, rd =  Decode_U_TYPE(instruction)
-        return rd, imm, AUIPC
+        return rd, imm, "AUIPC"
 
     if opcode == "1101111":
         imm, rd = Decode_J_TYPE(instruction)
-        return rd, imm, JAL
+        return rd, imm, "JAL"
 
     if opcode == "0110011":
         funct7, rs2, rs1,funct3, rd = Decode_R_TYPE(instruction)
         if funct3 == 0x0 and funct7 == 0x00:
-            return rd, reg[rs2], reg[rs1], ADD
+            return rd, reg[rs2], reg[rs1], "ADD"
 
         if funct3 == 0x0 and funct7 == 0x20:
-            return rd, reg[rs1], reg[rs2], SUB
+            return rd, reg[rs1], reg[rs2], "SUB"
 
         if funct3 == 0x4 and funct7 == 0x00:
-            return rd, reg[rs1], reg[rs2], XOR
+            return rd, reg[rs1], reg[rs2], "XOR"
 
         if funct3 == 0x6 and funct7 == 0x00:
-            return rd, reg[rs1], reg[rs2], OR
+            return rd, reg[rs1], reg[rs2], "OR"
 
         if funct3 == 0x7 and funct7 == 0x00:
-            return rd, reg[rs1], reg[rs2], AND
+            return rd, reg[rs1], reg[rs2], "AND"
+
+        if funct3 == 0x1 and funct7 == 0x00:
+            return rd, reg[rs1], reg[rs2], "SLL"
+
+        if funct3 == 0x5 and funct7 == 0x00:
+            return rd, reg[rs1], reg[rs2], "SRL"
+
+        if funct3 == 0x5 and funct7 == 0x20:
+            return rd, reg[rs1], reg[rs2], "SRA"
+
+        if funct3 == 0x2 and funct7 == 0x00:
+            return rd, reg[rs1], reg[rs2], "SLT"
+
+        if funct3 == 0x3 and funct7 == 0x00:
+            return rd, reg[rs1], reg[rs2], "SLTU"
+
+    if opcode == "0010011":
+        imm, rs1, funct3, rd, funct7, speacial_funct7 = Decode_I_TYPE(instruction)
+
+        if funct3 == 0x0:
+            return rd, reg[rs1], imm, "ADDI"
+        if funct3 == 0x4:
+            return rd, reg[rs1], imm, "XORI"
+        if funct3 == 0x6:
+            return rd, reg[rs1], imm, "ORI"
+        if funct3 == 0x7:
+            return rd, reg[rs1], imm, "ANDI"
+        if funct3 == 0x1 and funct7 == 0x00:
+            return rd, reg[rs1], speacial_funct7, "SLLI"
+        if funct3 == 0x5 and funct7 == 0x00:
+            return rd, reg[rs1], speacial_funct7, "SRLI"
+        if funct3 == 0x5 and funct7 == 0x20:
+            return rd, reg[rs1], speacial_funct7, "SRAI"
+        if funct3 == 0x2:
+            return rd, reg[rs1], imm, "SLTI"
+        if funct3 == 0x3:
+            return rd, reg[rs1], imm, "SLTIU"
+
+    if opcode == "0000011":
+        imm, rs1, funct3, rd, funct7, speacial_funct7 = Decode_I_TYPE(instruction)
+
+        if funct3 == 0x0:
+            return rd, reg[rs1], imm, "LB"
+        if funct3 == 0x1:
+            return rd, reg[rs1], imm, "LH"
+        if funct3 == 0x2:
+            return rd, reg[rs1], imm, "LW"
+        if funct3 == 0x4:
+            return rd, reg[rs1], imm, "LBU"
+        if funct3 == 0x5:
+            return rd, reg[rs1], imm, "LHU"
+
+
+    if opcode == "0100011":
+        imm ,rs2, rs1, funct3, rd = Decode_S_TYPE(instruction)
+
+        if funct3 == 0x0:
+            return reg[rs1],reg[rs2],imm,  "LB"
+        if funct3 == 0x1:
+            return reg[rs1],reg[rs2],imm,  "LH"
+        if funct3 == 0x2:
+            return reg[rs1],reg[rs2], imm, "LW"
+
+    if opcode == "1100011":
+        imm ,rs2, rs1, funct3 = Decode_B_TYPE(instruction)
+
+        if funct3 == 0x0:
+            return reg[rs1],reg[rs2],imm,  "BEQ"
+        if funct3 == 0x1:
+            return reg[rs1],reg[rs2],imm,  "BNE"
+        if funct3 == 0x4:
+            return reg[rs1],reg[rs2], imm, "BLT"
+        if funct3 == 0x5:
+            return reg[rs1],reg[rs2],imm,  "BGE"
+        if funct3 == 0x6:
+            return reg[rs1],reg[rs2],imm,  "BLTU"
+        if funct3 == 0x7:
+            return reg[rs1],reg[rs2], imm, "BGEU"
+

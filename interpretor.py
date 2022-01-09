@@ -2,12 +2,10 @@ import sys
 import InstructionDecode as ID
 import Execute as EX
 import InstructionFetch as IF
-
-RAM = []
-reg = [0] * 31
-PC = 0
+from Memory import *
 
 offset = 0x80000000
+str_offset = "0x80000000"
 machine_code = open(sys.argv[1])
 
 def Introdu_In_Memorie():
@@ -18,6 +16,8 @@ def Introdu_In_Memorie():
             continue
         line = line.replace(':', ' ')
         acm = line.split()
-        RAM.append(bytes.fromhex(acm[1]))
+        poz = int(acm[0], 16) - int(str_offset, 16)
+        RAM[poz] = bytes.fromhex(acm[1])
 
 Introdu_In_Memorie()
+
