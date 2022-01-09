@@ -201,3 +201,5 @@ def Instruction_Decode(instruction):
         if funct3 == 0x7:
             return Memory.reg[rs1],Memory.reg[rs2], imm, "BGEU"
 
+    if opcode == "1110011":
+        return -1

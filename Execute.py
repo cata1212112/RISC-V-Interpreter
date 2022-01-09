@@ -10,8 +10,7 @@ def get_32_bits(val):
 
 def sx(val):
     m = 1<<31
-    val = val&((1<<32) - 1)
-    return (val^m) - m
+    return (val&(m-1)) - (val^m)
 
 def ux(value):
     ok = 0
@@ -29,15 +28,15 @@ def get16(val):
 def get32(val):
     return val&0xffffffff
 
-def LUI(rd, imm): #VERIFICAT
+def LUI(rd, imm):
     Memory.reg[rd] = twos_comp(imm,32)
 
 def AUIPC(rd, imm):
     Memory.reg[rd] = Memory.PC + twos_comp(imm,32)
 
 def JAL(rd, imm):
-    Memory.reg[rd] = Memory.PC + 4
-    Memory.PC += twos_comp(imm,32)
+    Memory.reg[rd] = Memory.PC
+    Memory.PC = Memory.PC + twos_comp(imm,32) - 4
 
 def ADD(rd, val1, val2):
     Memory.reg[rd] = twos_comp(get_32_bits(sx(val1)+sx(val2)), 32)
@@ -76,14 +75,13 @@ def SLTU(rd, val1, val2):
         Memory.reg[rd] = 0
 
 def ADDI(rd, val1, imm):
-  #  print(imm, sx(imm))
-    Memory.reg[rd] = val1 + sx(imm)
+    Memory.reg[rd] = twos_comp(get32(twos_comp(val1, 32) + twos_comp((imm), 32)),32)
 
 def XORI(rd, val1, imm):
     Memory.reg[rd] = ux(val1)^ux(imm)
 
 def ORI(rd, val1, imm):
-    Memory.reg[rd] = ux(val1) | ux(imm)
+    Memory.reg[rd] = ux(val1) | imm
 
 def ANDI(rd, val1, imm):
     Memory.reg[rd] = ux(val1) & ux(imm)
@@ -135,11 +133,11 @@ def SW(val1, val2, imm):
 
 def BEQ(val1, val2, imm):
     if val1 == val2:
-        Memory.PC += twos_comp(imm,32)
+        Memory.PC += twos_comp(imm,32) - 4
 
 def BNE(val1, val2, imm):
     if val1 != val2:
-        Memory.PC += twos_comp(imm,32)
+        Memory.PC += twos_comp(imm,32) - 4
 
 def BLT(val1, val2, imm):
     if val1 < val2:
@@ -156,6 +154,11 @@ def BLTU(val1, val2, imm):
 def BGEU(val1, val2, imm):
     if ux(val1) >= ux(val2):
         Memory.PC += twos_comp(imm,32)
+
+def ECALL():
+    print(Memory.reg)
+    if Memory.reg[10] == 1:
+        Memory.running = 0
 
 def Execute(decoded):
     funct = decoded[-1]
@@ -231,3 +234,5 @@ def Execute(decoded):
         BLTU(decoded[0], decoded[1], decoded[2])
     elif funct == "BGEU":
         BGEU(decoded[0], decoded[1], decoded[2])
+
+    Memory.reg[0] = 0

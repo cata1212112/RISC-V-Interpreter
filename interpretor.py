@@ -21,11 +21,15 @@ def Introdu_In_Memorie():
 
 Introdu_In_Memorie()
 
-while 1:
+while Memory.running:
     instruction = IF.Instruction_Fetch()
     if instruction == b'\x00\x00\x00\x00':
         continue
-    print(f"Instructiunea este {bin(int(str(instruction.hex()), 16))[2:].zfill(32)} PC este {hex(Memory.PC - 4)}")
+    print(f"Instructiunea este {bin(int(str(instruction.hex()), 16))[2:].zfill(32)} la PC {hex(Memory.PC -4)}")
     decoded = ID.Instruction_Decode(instruction)
     print(decoded)
+    if decoded == -1:
+        EX.ECALL()
+        continue
     EX.Execute(decoded)
+    print(Memory.reg)
