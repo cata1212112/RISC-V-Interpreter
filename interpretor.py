@@ -2,7 +2,7 @@ import sys
 import InstructionDecode as ID
 import Execute as EX
 import InstructionFetch as IF
-from Memory import *
+import Memory
 
 offset = 0x80000000
 str_offset = "0x80000000"
@@ -17,7 +17,15 @@ def Introdu_In_Memorie():
         line = line.replace(':', ' ')
         acm = line.split()
         poz = int(acm[0], 16) - int(str_offset, 16)
-        RAM[poz] = bytes.fromhex(acm[1])
+        Memory.RAM[poz] = bytes.fromhex(acm[1])
 
 Introdu_In_Memorie()
 
+while 1:
+    instruction = IF.Instruction_Fetch()
+    if instruction == b'\x00\x00\x00\x00':
+        continue
+    print(f"Instructiunea este {bin(int(str(instruction.hex()), 16))[2:].zfill(32)} PC este {hex(Memory.PC - 4)}")
+    decoded = ID.Instruction_Decode(instruction)
+    print(decoded)
+    EX.Execute(decoded)

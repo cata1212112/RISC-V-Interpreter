@@ -1,6 +1,6 @@
-from interpretor import *
+import Memory
 
-def Instruction_Fetch(program_counter):
-    old_PC = program_counter
-    program_counter += 4
-    return RAM[old_PC - offset]
+def Instruction_Fetch():
+    old_PC = Memory.PC
+    Memory.PC += 4
+    return Memory.RAM[old_PC - Memory.offset]
